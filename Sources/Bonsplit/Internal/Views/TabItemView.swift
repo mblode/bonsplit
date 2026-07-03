@@ -229,6 +229,12 @@ struct TabItemView: View {
     /// the enclosing tab strip distributes (see ``BonsplitConfiguration/Appearance/tabWidthMode``).
     let fillsWidth: Bool
     let saturation: Double
+    /// Draw a 1px separator on the leading edge (inactive tabs only). False for
+    /// the first tab and when the previous tab's trailing border already draws
+    /// the shared line.
+    var showsLeadingBorder: Bool = false
+    /// Draw a 1px separator on the trailing edge (inactive tabs only).
+    var showsTrailingBorder: Bool = false
     let controlShortcutDigit: Int?
     /// Whether tab keyboard-shortcut hints are enabled at all (a global setting,
     /// independent of which pane is focused). Drives the reserved hint-slot width.
@@ -340,9 +346,13 @@ struct TabItemView: View {
         HStack(spacing: 0) {
             // Icon + title block uses the standard spacing, but keep the close affordance tight.
             HStack(spacing: scaledContentSpacing) {
-                leadingIcon
+                // Terminal tabs skip the redundant glyph — the tab bar already
+                // lives inside a terminal app. Browser favicons etc. still show.
+                if !hidesLeadingIcon {
+                    leadingIcon
+                }
 
-                Text(tab.title)
+                Text(displayTitle)
                     .font(.system(size: appearance.tabTitleFontSize))
                     .lineLimit(1)
                     .foregroundStyle(
@@ -479,6 +489,31 @@ struct TabItemView: View {
     }
 
     /// Leading favicon / loading spinner / symbol icon. Shared by the standard and
+    /// Terminal tabs carry a redundant terminal glyph; hide it (keep the slot
+    /// for loading spinners and real favicons).
+    private var hidesLeadingIcon: Bool {
+        tab.icon == "terminal.fill" && !tab.isLoading && tab.iconImageData == nil
+    }
+
+    /// Leading glyphs agents prepend to titles as spinner frames or markers
+    /// (✳-family, braille frames, middle dots) are decoration, not title.
+    private static let decorativeTitlePrefixCharacters: CharacterSet = {
+        var set = CharacterSet(charactersIn: "✳✻✽✢✶✣✤∗❊⏺●◉○◌◍◎◐◑◒◓·•∙⋅◦∘‧・･․⸱⁘⁙⋯…°˚*")
+        set.insert(charactersIn: Unicode.Scalar(0x2800)!...Unicode.Scalar(0x28FF)!)
+        set.formUnion(.whitespaces)
+        return set
+    }()
+
+    private var displayTitle: String {
+        let title = tab.title
+        guard !title.trimmingCharacters(in: Self.decorativeTitlePrefixCharacters).isEmpty else {
+            return title
+        }
+        return String(title.drop(while: { char in
+            char.unicodeScalars.allSatisfy { Self.decorativeTitlePrefixCharacters.contains($0) }
+        }))
+    }
+
     /// icon-only layouts so favicon state handling stays in one place.
     @ViewBuilder
     private var leadingIcon: some View {
@@ -774,26 +809,33 @@ struct TabItemView: View {
     private var tabBackground: some View {
         ZStack {
             if isSelected {
-                // Chrome-style active tab: a rounded surface filled with the pane's
-                // background color so the tab and the pane below it read as one
-                // continuous surface. The top corners are rounded and lifted off the
-                // top of the bar; the bottom stays flush so it merges with the pane.
-                UnevenRoundedRectangle(
-                    topLeadingRadius: 8,
-                    bottomLeadingRadius: 0,
-                    bottomTrailingRadius: 0,
-                    topTrailingRadius: 8,
-                    style: .continuous
-                )
-                .fill(TabBarColors.paneBackground(for: appearance))
-                .padding(.top, 4)
+                // Notion-style active tab: a square, full-height column filled
+                // with the active color (the terminal surface) so the tab and
+                // the pane below read as one continuous surface. No borders —
+                // the bar's bottom hairline breaks under this tab.
+                Rectangle()
+                    .fill(TabBarColors.activeTabBackground(for: appearance))
             } else if TabItemStyling.shouldShowHoverBackground(isHovered: isHovered, isSelected: isSelected) {
-                // Soft Chrome-like hover pill for non-selected tabs.
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                // Full-height square hover wash for non-selected tabs.
+                Rectangle()
                     .fill(TabBarColors.hoveredTabBackground(for: appearance))
-                    .padding(.top, 4)
-                    .padding(.bottom, 2)
-                    .padding(.horizontal, 2)
+            }
+            // Vertical hairlines on inactive tabs (leading collapses against an
+            // inactive neighbor at the call site so abutting tabs share one line).
+            if !isSelected {
+                HStack(spacing: 0) {
+                    if showsLeadingBorder {
+                        Rectangle()
+                            .fill(TabBarColors.separator(for: appearance))
+                            .frame(width: 1)
+                    }
+                    Spacer(minLength: 0)
+                    if showsTrailingBorder {
+                        Rectangle()
+                            .fill(TabBarColors.separator(for: appearance))
+                            .frame(width: 1)
+                    }
+                }
             }
         }
     }

@@ -48,6 +48,13 @@ enum TabBarColors {
             ?? nonClearColor(chromeBackgroundColor(for: appearance))
     }
 
+    private static func activeTabBackgroundColor(
+        for appearance: BonsplitConfiguration.Appearance
+    ) -> NSColor? {
+        guard let value = appearance.chromeColors.activeTabBackgroundHex else { return nil }
+        return NSColor(bonsplitHex: value)
+    }
+
     private static func splitButtonBackdropColor(
         for appearance: BonsplitConfiguration.Appearance
     ) -> NSColor? {
@@ -164,6 +171,12 @@ enum TabBarColors {
     }
 
     static func activeTabBackground(for appearance: BonsplitConfiguration.Appearance) -> Color {
+        // An explicit active-tab color always wins, even under a shared window
+        // backdrop — the host asked for a fixed selection fill, not the
+        // terminal-tinted backdrop showing through.
+        if let explicit = nonClearColor(activeTabBackgroundColor(for: appearance)) {
+            return Color(nsColor: explicit)
+        }
         guard let custom = tabBarBackgroundColor(for: appearance) else {
             return activeTabBackground
         }

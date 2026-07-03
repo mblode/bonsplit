@@ -1326,14 +1326,22 @@ struct TabBarView: View {
     @ViewBuilder
     private func tabItem(for tab: TabItem, at index: Int) -> some View {
         let contextMenuState = contextMenuState(for: tab, at: index)
-        let showsZoomIndicator = splitViewController.zoomedPaneId == pane.id && pane.selectedTabId == tab.id
+        let isSelected = pane.selectedTabId == tab.id
+        let showsZoomIndicator = splitViewController.zoomedPaneId == pane.id && isSelected
+        // Inactive tabs carry 1px vertical hairlines. Trailing always; leading
+        // only when the previous tab is the selected one — an inactive neighbor's
+        // trailing border already draws the shared line (tabs abut at spacing 0),
+        // and the first tab never draws a leading border.
+        let previousTabIsSelected = index > 0 && pane.selectedTabId == pane.tabs[index - 1].id
         TabItemView(
             tab: tab,
-            isSelected: pane.selectedTabId == tab.id,
+            isSelected: isSelected,
             showsZoomIndicator: showsZoomIndicator,
             appearance: appearance,
             fillsWidth: fillsTabsToWidth,
             saturation: tabBarSaturation,
+            showsLeadingBorder: !isSelected && previousTabIsSelected,
+            showsTrailingBorder: !isSelected,
             controlShortcutDigit: tabControlShortcutDigit(for: index, tabCount: pane.tabs.count),
             tabShortcutHintsEnabled: splitViewController.tabShortcutHintsEnabled,
             isFocused: isFocused,
@@ -2019,10 +2027,10 @@ struct TabBarView: View {
         VStack(spacing: 0) {
             Spacer(minLength: 0)
             HStack(spacing: 0) {
-                // Bottom hairline suppressed: the active tab shares the pane color and
-                // merges with the pane below (Chrome-style), so a separating line under
-                // the bar would fight that continuous surface.
-                let separator = Color.clear
+                // Notion-style bottom hairline: runs the full bar width but breaks
+                // under the selected tab, which shares the pane color and merges
+                // with the pane below.
+                let separator = TabBarColors.separator(for: appearance)
                 let gapRange = tabBarLayout.selectedSeparatorGap(
                     selectedTabFrame: selectedTabFrameInBar,
                     totalWidth: totalWidth
