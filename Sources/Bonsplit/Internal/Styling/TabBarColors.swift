@@ -273,7 +273,10 @@ enum TabBarColors {
     }
 
     static func activeIndicator(saturation: Double) -> Color {
-        return Color(nsColor: NSColor.controlAccentColor.bonsplitSaturating(by: saturation))
+        // No blue accent line on the active tab — the tab's lighter fill is the
+        // selection affordance. (Was controlAccentColor.)
+        _ = saturation
+        return .clear
     }
 
     static var focusRing: Color {

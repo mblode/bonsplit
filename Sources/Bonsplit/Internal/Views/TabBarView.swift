@@ -1327,8 +1327,6 @@ struct TabBarView: View {
     private func tabItem(for tab: TabItem, at index: Int) -> some View {
         let contextMenuState = contextMenuState(for: tab, at: index)
         let showsZoomIndicator = splitViewController.zoomedPaneId == pane.id && pane.selectedTabId == tab.id
-        let isImmediatelyBeforeSelected = pane.tabs.indices.contains(index + 1)
-            && pane.tabs[index + 1].id == pane.selectedTabId
         TabItemView(
             tab: tab,
             isSelected: pane.selectedTabId == tab.id,
@@ -1336,9 +1334,6 @@ struct TabBarView: View {
             appearance: appearance,
             fillsWidth: fillsTabsToWidth,
             saturation: tabBarSaturation,
-            trailingSeparatorBottomInset: isImmediatelyBeforeSelected
-                ? TabBarMetrics.selectedTabLeftSeparatorBottomInset
-                : 0,
             controlShortcutDigit: tabControlShortcutDigit(for: index, tabCount: pane.tabs.count),
             tabShortcutHintsEnabled: splitViewController.tabShortcutHintsEnabled,
             isFocused: isFocused,
@@ -1813,6 +1808,7 @@ struct TabBarView: View {
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(splitActionButtonTooltip(button, tooltips: tooltips))
                 .accessibilityAddTraits(.isButton)
+                .bonsplitPointingHandCursor()
         } else {
             Button {
                 performSplitActionButton(button)
@@ -1820,6 +1816,7 @@ struct TabBarView: View {
                 splitActionButtonIcon(button.icon)
             }
             .buttonStyle(SplitActionButtonStyle(appearance: appearance, layout: tabBarLayout))
+            .bonsplitPointingHandCursor()
         }
     }
 
@@ -2022,7 +2019,10 @@ struct TabBarView: View {
         VStack(spacing: 0) {
             Spacer(minLength: 0)
             HStack(spacing: 0) {
-                let separator = TabBarColors.separator(for: appearance)
+                // Bottom hairline suppressed: the active tab shares the pane color and
+                // merges with the pane below (Chrome-style), so a separating line under
+                // the bar would fight that continuous surface.
+                let separator = Color.clear
                 let gapRange = tabBarLayout.selectedSeparatorGap(
                     selectedTabFrame: selectedTabFrameInBar,
                     totalWidth: totalWidth

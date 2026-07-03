@@ -17,6 +17,18 @@ extension View {
         }
     }
 
+    /// Shows the macOS pointing-hand cursor while the pointer is over a clickable
+    /// tab-bar control, matching the affordance browsers use for tabs and buttons.
+    func bonsplitPointingHandCursor() -> some View {
+        onHover { hovering in
+            if hovering {
+                NSCursor.pointingHand.push()
+            } else {
+                NSCursor.pop()
+            }
+        }
+    }
+
     /// Imposes a minimum width on the tab row only when `minWidth` is non-nil.
     ///
     /// Used by the tab strip's fill mode to force the horizontal `ScrollView` to hand
@@ -217,7 +229,6 @@ struct TabItemView: View {
     /// the enclosing tab strip distributes (see ``BonsplitConfiguration/Appearance/tabWidthMode``).
     let fillsWidth: Bool
     let saturation: Double
-    let trailingSeparatorBottomInset: CGFloat
     let controlShortcutDigit: Int?
     /// Whether tab keyboard-shortcut hints are enabled at all (a global setting,
     /// independent of which pane is focused). Drives the reserved hint-slot width.
@@ -289,6 +300,7 @@ struct TabItemView: View {
         .onTapGesture {
             onSelect()
         }
+        .bonsplitPointingHandCursor()
         .simultaneousGesture(
             TapGesture(count: 2).onEnded {
                 onZoomToggle()
@@ -760,24 +772,28 @@ struct TabItemView: View {
 
     @ViewBuilder
     private var tabBackground: some View {
-        ZStack(alignment: .top) {
+        ZStack {
             if isSelected {
-                Rectangle()
-                    .fill(TabBarColors.activeTabBackground(for: appearance))
+                // Chrome-style active tab: a rounded surface filled with the pane's
+                // background color so the tab and the pane below it read as one
+                // continuous surface. The top corners are rounded and lifted off the
+                // top of the bar; the bottom stays flush so it merges with the pane.
+                UnevenRoundedRectangle(
+                    topLeadingRadius: 8,
+                    bottomLeadingRadius: 0,
+                    bottomTrailingRadius: 0,
+                    topTrailingRadius: 8,
+                    style: .continuous
+                )
+                .fill(TabBarColors.paneBackground(for: appearance))
+                .padding(.top, 4)
             } else if TabItemStyling.shouldShowHoverBackground(isHovered: isHovered, isSelected: isSelected) {
-                Rectangle()
+                // Soft Chrome-like hover pill for non-selected tabs.
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .fill(TabBarColors.hoveredTabBackground(for: appearance))
-            } else {
-                Color.clear
-            }
-
-            // Right border separator
-            HStack {
-                Spacer()
-                Rectangle()
-                    .fill(TabBarColors.separator(for: appearance))
-                    .frame(width: 1)
-                    .padding(.bottom, max(0, trailingSeparatorBottomInset))
+                    .padding(.top, 4)
+                    .padding(.bottom, 2)
+                    .padding(.horizontal, 2)
             }
         }
     }
@@ -841,6 +857,7 @@ struct TabItemView: View {
                     }
                 }
                 .saturation(saturation)
+                .bonsplitPointingHandCursor()
             }
         }
         .frame(width: accessorySlotSize, height: accessorySlotSize)
