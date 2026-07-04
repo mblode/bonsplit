@@ -811,10 +811,19 @@ struct TabItemView: View {
             if isSelected {
                 // Notion-style active tab: a square, full-height column filled
                 // with the active color (the terminal surface) so the tab and
-                // the pane below read as one continuous surface. No borders —
-                // the bar's bottom hairline breaks under this tab.
+                // the pane below read as one continuous surface. The active
+                // column is bounded by vertical hairlines: the leading edge is
+                // drawn by the preceding tab's trailing separator, and the
+                // trailing edge is drawn here so the column stays bounded even
+                // when the active tab is last (no following tab to draw it).
                 Rectangle()
                     .fill(TabBarColors.activeTabBackground(for: appearance))
+                HStack(spacing: 0) {
+                    Spacer(minLength: 0)
+                    Rectangle()
+                        .fill(TabBarColors.separator(for: appearance))
+                        .frame(width: 1)
+                }
             } else if TabItemStyling.shouldShowHoverBackground(isHovered: isHovered, isSelected: isSelected) {
                 // Full-height square hover wash for non-selected tabs.
                 Rectangle()

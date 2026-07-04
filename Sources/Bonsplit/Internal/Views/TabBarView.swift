@@ -1328,11 +1328,10 @@ struct TabBarView: View {
         let contextMenuState = contextMenuState(for: tab, at: index)
         let isSelected = pane.selectedTabId == tab.id
         let showsZoomIndicator = splitViewController.zoomedPaneId == pane.id && isSelected
-        // Inactive tabs carry 1px vertical hairlines. Trailing always; leading
-        // only when the previous tab is the selected one — an inactive neighbor's
-        // trailing border already draws the shared line (tabs abut at spacing 0),
-        // and the first tab never draws a leading border.
-        let previousTabIsSelected = index > 0 && pane.selectedTabId == pane.tabs[index - 1].id
+        // Inactive tabs carry a 1px trailing hairline (tabs abut at spacing 0,
+        // so a neighbor's trailing border draws the shared line). The active
+        // tab now draws its own trailing hairline, so the tab following it no
+        // longer needs a leading border to bound the active column's right edge.
         TabItemView(
             tab: tab,
             isSelected: isSelected,
@@ -1340,7 +1339,7 @@ struct TabBarView: View {
             appearance: appearance,
             fillsWidth: fillsTabsToWidth,
             saturation: tabBarSaturation,
-            showsLeadingBorder: !isSelected && previousTabIsSelected,
+            showsLeadingBorder: false,
             showsTrailingBorder: !isSelected,
             controlShortcutDigit: tabControlShortcutDigit(for: index, tabCount: pane.tabs.count),
             tabShortcutHintsEnabled: splitViewController.tabShortcutHintsEnabled,
