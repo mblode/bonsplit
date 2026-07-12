@@ -35,6 +35,20 @@ enum TabBarColors {
         return NSColor(bonsplitHex: value)
     }
 
+    private static func activeTabBackgroundColor(
+        for appearance: BonsplitConfiguration.Appearance
+    ) -> NSColor? {
+        guard let value = appearance.chromeColors.activeTabBackgroundHex else { return nil }
+        return NSColor(bonsplitHex: value)
+    }
+
+    private static func activeTabIndicatorColor(
+        for appearance: BonsplitConfiguration.Appearance
+    ) -> NSColor? {
+        guard let value = appearance.chromeColors.activeTabIndicatorHex else { return nil }
+        return NSColor(bonsplitHex: value)
+    }
+
     private static func nonClearColor(_ color: NSColor?) -> NSColor? {
         guard let color else { return nil }
         let resolved = color.usingColorSpace(.sRGB) ?? color
@@ -164,6 +178,9 @@ enum TabBarColors {
     }
 
     static func activeTabBackground(for appearance: BonsplitConfiguration.Appearance) -> Color {
+        if let explicit = activeTabBackgroundColor(for: appearance) {
+            return Color(nsColor: explicit)
+        }
         guard let custom = tabBarBackgroundColor(for: appearance) else {
             return activeTabBackground
         }
@@ -274,6 +291,13 @@ enum TabBarColors {
 
     static func activeIndicator(saturation: Double) -> Color {
         return Color(nsColor: NSColor.controlAccentColor.bonsplitSaturating(by: saturation))
+    }
+
+    static func activeIndicator(for appearance: BonsplitConfiguration.Appearance, saturation: Double) -> Color {
+        if let explicit = activeTabIndicatorColor(for: appearance) {
+            return Color(nsColor: explicit)
+        }
+        return activeIndicator(saturation: saturation)
     }
 
     static var focusRing: Color {

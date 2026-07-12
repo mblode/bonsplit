@@ -455,6 +455,14 @@ extension BonsplitConfiguration {
             /// When unset, Bonsplit falls back to `backgroundHex`.
             public var tabBarBackgroundHex: String?
 
+            /// Optional hex color (`#RRGGBB` or `#RRGGBBAA`) for the selected tab fill.
+            /// When unset, Bonsplit derives the fill from `tabBarBackgroundHex`.
+            public var activeTabBackgroundHex: String?
+
+            /// Optional hex color (`#RRGGBB` or `#RRGGBBAA`) for the selected tab's top indicator.
+            /// When unset, Bonsplit uses the system accent color.
+            public var activeTabIndicatorHex: String?
+
             /// Optional hex color (`#RRGGBB` or `#RRGGBBAA`) for the split action button backdrop.
             /// When unset, Bonsplit falls back to `tabBarBackgroundHex`, then `backgroundHex`.
             public var splitButtonBackdropHex: String?
@@ -470,12 +478,16 @@ extension BonsplitConfiguration {
             public init(
                 backgroundHex: String? = nil,
                 tabBarBackgroundHex: String? = nil,
+                activeTabBackgroundHex: String? = nil,
+                activeTabIndicatorHex: String? = nil,
                 splitButtonBackdropHex: String? = nil,
                 paneBackgroundHex: String? = nil,
                 borderHex: String? = nil
             ) {
                 self.backgroundHex = backgroundHex
                 self.tabBarBackgroundHex = tabBarBackgroundHex
+                self.activeTabBackgroundHex = activeTabBackgroundHex
+                self.activeTabIndicatorHex = activeTabIndicatorHex
                 self.splitButtonBackdropHex = splitButtonBackdropHex
                 self.paneBackgroundHex = paneBackgroundHex
                 self.borderHex = borderHex

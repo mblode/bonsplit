@@ -2095,7 +2095,7 @@ struct TabBarView: View {
     private func selectedTabIndicator(totalWidth: CGFloat) -> some View {
         if let frame = selectedIndicatorFrame(totalWidth: totalWidth) {
             Rectangle()
-                .fill(TabBarColors.activeIndicator(saturation: tabBarSaturation))
+                .fill(TabBarColors.activeIndicator(for: appearance, saturation: tabBarSaturation))
                 .frame(width: frame.width, height: TabBarMetrics.activeIndicatorHeight)
                 .offset(x: frame.minX)
                 .transaction { transaction in
